@@ -39,3 +39,8 @@
 Icon?
 ehthumbs.db
 Thumbs.db
+
+# Project Specific #
+####################
+.gradle
+out
