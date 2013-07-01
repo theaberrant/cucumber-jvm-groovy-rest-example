@@ -44,3 +44,4 @@ Thumbs.db
 ####################
 .gradle
 out
+build
