@@ -1,5 +1,6 @@
 package httpbin
 
+import groovy.util.logging.Slf4j
 import groovyx.net.http.HttpResponseDecorator
 import groovyx.net.http.HttpResponseException
 import groovyx.net.http.RESTClient
@@ -15,6 +16,7 @@ import java.security.cert.X509Certificate
 /**
  * Helper classes for testing calls using httpbin.org
  */
+@Slf4j
 class HttpBin {
     public static String httpBinURL = 'https://httpbin.org/'
     static RESTClient rc

@@ -26,11 +26,9 @@ When(~'^I call delete$') {->
 }
 
 Then(~'^the response should be successful$') {->
-    System.out.println("Response Status: " + response.status)
-    System.out.println("Response Data: " + response.data)
     assert response.status == 200
 }
 
 After() { Scenario sc ->
-    Scenario.write("This is a test!")
+    sc.write("This is the after block of the scenario")
 }
