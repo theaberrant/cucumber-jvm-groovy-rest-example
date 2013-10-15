@@ -1,3 +1,5 @@
+import groovyx.gpars.GParsPool
+
 apply plugin: 'groovy'
 apply plugin: 'idea'
 
@@ -19,6 +21,16 @@ task cucumber() {
             classpath = configurations.cucumberRuntime
             args = ['-f', 'pretty', '--glue', 'src/test/groovy', 'src/test/resources']
         }
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.codehaus.gpars:gpars:1.1.0"
     }
 }
 
@@ -46,4 +58,33 @@ dependencies {
 
 repositories {
     mavenCentral()
+}
+
+def concurrentMethod(String fileName, String threadName) {
+    logger.quiet "FileName: $fileName, ThreadName: $threadName"
+    cucumber.execute()
+}
+
+String getThreadName(names) {
+    String currentName = Thread.currentThread().name
+    if (!names.contains(currentName)) names << currentName
+
+    "t${names.indexOf(currentName).toString().padLeft(2, '0')}"
+}
+
+
+task run << {
+    def cores   = Runtime.runtime.availableProcessors()
+    def threads = 10
+    println "    > Using $threads threads on $cores cores..."
+    def names = []
+    GParsPool.withPool(threads) {
+        def features = fileTree(dir: 'src/test/resources').include '**/*.feature'
+        features.eachParallel { File file ->
+            def name = getThreadName(names)
+            logger.quiet "File: ${file.name}"
+            concurrentMethod(file.name, name)
+        }
+    }
+    logger.quiet("Run complete!")
 }
