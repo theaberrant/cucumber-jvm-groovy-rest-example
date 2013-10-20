@@ -18,7 +18,8 @@
 *.dmg
 *.gz
 *.iso
-*.jar
+# Need to not ignore .jar for gradle jar
+#*.jar
 *.rar
 *.tar
 *.zip

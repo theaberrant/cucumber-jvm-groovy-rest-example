@@ -41,19 +41,12 @@ dependencies {
     groovy 'org.slf4j:slf4j-api:1.7.+'
     groovy 'org.slf4j:slf4j-log4j12:1.7.5'
 
-    /*
-   In order to work around a really flagrant bug ( http://issues.gradle.org/browse/GRADLE-732 )
-   You have to create a configuration that includes the jar.archivePath (the jar.archivePath is created by the java plugin)
-   and give it the same name as the cucumberRuntime configuration, or name it something different and have the cucumberRuntime
-   configuration extend from it as well.
-
-   VERY ANNOYING BUG
-    */
+    //In order to work around bug http://issues.gradle.org/browse/GRADLE-732
     cucumberRuntime files("${jar.archivePath}")
 
     testCompile 'junit:junit:4.11'
-    testCompile 'info.cukes:cucumber-junit:1.1.2'
-    testCompile 'info.cukes:cucumber-groovy:1.1.2'
+    testCompile 'info.cukes:cucumber-junit:1.1.5'
+    testCompile 'info.cukes:cucumber-groovy:1.1.5'
 }
 
 repositories {
@@ -61,8 +54,15 @@ repositories {
 }
 
 def concurrentMethod(String fileName, String threadName) {
+    def args = ['-f', 'pretty', '--glue', 'src/test/groovy', 'src/test/resources'].join(" ")
+    def classpath = configurations.cucumberRuntime.getAsPath()
+    def main = "cucumber.api.cli.Main"
     logger.quiet "FileName: $fileName, ThreadName: $threadName"
-    cucumber.execute()
+    logger.quiet "Running command: \"java -cp $classpath $main $args\""
+    def process = "java -cp $classpath $main $args".execute()
+    process.waitForOrKill(25000)
+    logger.quiet "Process Out: ${process.text}"
+    logger.quiet "Process Err: ${process.err}"
 }
 
 String getThreadName(names) {
@@ -73,8 +73,9 @@ String getThreadName(names) {
 }
 
 
-task run << {
-    def cores   = Runtime.runtime.availableProcessors()
+task concurrentCucumber() {
+    dependsOn assemble
+    def cores = Runtime.runtime.availableProcessors()
     def threads = 10
     println "    > Using $threads threads on $cores cores..."
     def names = []
@@ -87,4 +88,9 @@ task run << {
         }
     }
     logger.quiet("Run complete!")
+}
+
+task wrapper(type: Wrapper) {
+    jarFile = 'wrapper/gradle-wrapper.jar'
+    gradleVersion = "1.8"
 }
