@@ -53,38 +53,29 @@ repositories {
     mavenCentral()
 }
 
-def concurrentMethod(String fileName, String threadName) {
-    def args = ['-f', 'pretty', '--glue', 'src/test/groovy', 'src/test/resources'].join(" ")
+def concurrentMethod(String fileName) {
+    def args = ['-f', 'pretty', '--glue', 'src/test/groovy'].join(" ")
     def classpath = configurations.cucumberRuntime.getAsPath()
     def main = "cucumber.api.cli.Main"
-    logger.quiet "FileName: $fileName, ThreadName: $threadName"
+    logger.quiet "FileName: $fileName"
     logger.quiet "Running command: \"java -cp $classpath $main $args\""
-    def process = "java -cp $classpath $main $args".execute()
+    def process = "java -cp $classpath $main $args $fileName".execute()
     process.waitForOrKill(25000)
     logger.quiet "Process Out: ${process.text}"
     logger.quiet "Process Err: ${process.err}"
 }
 
-String getThreadName(names) {
-    String currentName = Thread.currentThread().name
-    if (!names.contains(currentName)) names << currentName
-
-    "t${names.indexOf(currentName).toString().padLeft(2, '0')}"
-}
-
-
 task concurrentCucumber() {
     dependsOn assemble
     def cores = Runtime.runtime.availableProcessors()
-    def threads = 10
+    def threads = 4
     println "    > Using $threads threads on $cores cores..."
     def names = []
     GParsPool.withPool(threads) {
         def features = fileTree(dir: 'src/test/resources').include '**/*.feature'
         features.eachParallel { File file ->
-            def name = getThreadName(names)
             logger.quiet "File: ${file.name}"
-            concurrentMethod(file.name, name)
+            concurrentMethod(file.path)
         }
     }
     logger.quiet("Run complete!")
